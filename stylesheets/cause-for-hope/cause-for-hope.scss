@@ -1,0 +1,227 @@
+/* ADJUSTABLE VARIABLES */
+
+// Donation Form
+$donationFormColor: $btnPrimaryBgColor;
+$donationBtnBgColor: $donationFormColor;
+$donationBtnTextColor: $btnPrimaryTextColor;
+$donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
+
+
+/* PAGE NAVIGATION */
+.page-navigation {
+
+	&__link {
+
+		// Active link styles
+		.header__menu--desktop &--normal,
+        .header__menu--desktop &--dropdown {
+            position: relative;
+
+            &.page-navigation__link--is-active:before {
+                content: '';
+                position: absolute;
+                bottom: .15rem;
+                left: .75rem;
+                right: .75rem;
+                height: 2px;
+				border-radius: 1px;
+                background: $primaryColor;
+            }
+        }
+
+        .header--theme-transparent &--normal.page-navigation__link--is-active:before,
+        .header--theme-transparent &--dropdown .dropdown__tab__label:before {
+			background: accessibleColor($primaryColor,black,7.5);
+        }
+	}
+}
+
+/* POST */
+.post--detail-item {
+    border-color: rgba($secondaryDarker,.5);
+    transition: .3s $easeOut;
+
+    &:hover,
+    &:focus {
+        border-color: $secondaryDarker;
+    }
+}
+
+.profile-tile--detail-minimal .profile-tile__name {
+    @include h2;
+	font-weight: bold;
+}
+
+/* POST CREATE FORM */
+.modal .postcreate {
+	border: none;
+	padding: 0;
+	background: none;
+}
+
+/* MODAL */
+.modal {
+
+	&__content-box {
+        border: 1px solid rgba(accessibleColor($primaryDarker),.25);
+	}
+}
+
+/* SIGNUP ROW */
+.row--signup {
+
+	.col--6 {
+		padding-right: 3rem;
+
+		@include respond-to('mobile') {
+			padding-right: unset;
+		}
+	}
+}
+
+/* FORM FIELD */
+.form-field {
+
+	&,
+	&__label-text,
+	input {
+		color: accessibleColor($primaryColor);
+	}
+}
+
+/* PROGRESS BAR VARIANTS */
+@include rowHasBackground {
+
+	.progress-bar__progress {
+		background: rgba(255,255,255,0.4);
+	}
+
+	.progress-bar__bar {
+		background: $primaryColor;
+	}
+
+	.progress-bar__stats-outter {
+		color: white;
+	}
+}
+
+.progress-bar--large-total {
+	.progress-bar__total {
+		left: 0;
+	}
+	.progress-bar__stats-outter {
+		font-size: 1.25rem;
+		margin-bottom: 1.5rem;
+	}
+}
+
+/* DONATION FORM */
+.donation-form {
+	background: white;
+	box-shadow: none;
+	border: 1px solid $donationFormHeaderColor;
+
+    &__header {
+        position: relative;
+		background: $donationFormHeaderColor;
+
+		> * {
+			position: relative;
+		}
+
+        h4 {
+            color: accessibleColor($donationFormColor);
+        }
+    }
+
+    &__stage {
+        border-color: $primaryDarkest;
+		color: rgba(accessibleColor($donationFormColor),.75);
+
+        &--active {
+            background: accessibleColor($donationFormColor);
+			border-color: accessibleColor($donationFormColor);
+            color: accessibleColor(white, accessibleColor($donationFormColor));
+        }
+    }
+
+    &__amount-btn {
+        background: transparent;
+		border-color: if(lightness($donationBtnBgColor) > 90, darken($donationBtnBgColor,10), mix(accessibleColor($donationBtnBgColor,$threshold:2),white,50%));
+        color: accessibleColor($donationBtnTextColor);
+
+        &:hover,
+        &:focus {
+            background: $donationBtnBgColor;
+            color: $donationBtnTextColor;
+			border-color: transparent;
+        }
+    }
+
+	// Donation Navigation
+    &__stripe-buttons .button,
+    &__nav .button {
+        margin: 0;
+        border-radius: 0;
+
+        &.donation-form__back {
+            border-bottom-right-radius: 0;
+        }
+
+        &.donation-form__next {
+            border-bottom-left-radius: 0;
+        }
+    }
+}
+
+/* STRAVA */
+.strava-activity-list__list-item {
+    color: accessibleColor($primaryColor);
+
+    &__delete-button {
+        color: $btnSecondaryTextColor;
+    }
+}
+
+
+/* SIGNUP FORM */
+.signup-form {
+    &__exercise {
+        &__btn {
+            background: transparent;
+            border-width: 1px;
+            border-color: if(lightness($donationBtnBgColor) > 90, darken($donationBtnBgColor,10), mix(accessibleColor($donationBtnBgColor,$threshold:2),white,50%));
+            color: accessibleColor($donationBtnTextColor);
+            padding: 1rem;
+
+            &:hover,
+            &:focus {
+                background: $donationBtnBgColor;
+                color: $donationBtnTextColor;
+                border-color: transparent;
+            }
+        }
+
+        &__other {
+            background: $donationFormHeaderColor;
+            color: accessibleColor($primaryColor);
+            &__input {
+                color: accessibleColor($primaryColor);
+            }
+        }
+    }
+}
+
+.page--is-editor {
+  .hidden {
+    opacity: 50%;
+    &:before {
+      text-transform: capitalize; 	position: relative; z-index: 1; font-weight: bold; content: 'hidden'; }
+  }
+}
+
+.page--is-client {
+  .hidden {
+    display: none;
+  }
+}
