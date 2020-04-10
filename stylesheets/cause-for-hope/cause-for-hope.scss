@@ -2,10 +2,9 @@
 
 // Donation Form
 $donationFormColor: $btnPrimaryBgColor;
-$donationBtnBgColor: $donationFormColor;
+$donationBtnBgColor: $primaryColor;
 $donationBtnTextColor: $btnPrimaryTextColor;
 $donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
-
 
 /* PAGE NAVIGATION */
 .page-navigation {
@@ -146,13 +145,13 @@ $donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
     }
 
     &__amount-btn {
-        background: transparent;
+        background: $primaryColor;
 		border-color: if(lightness($donationBtnBgColor) > 90, darken($donationBtnBgColor,10), mix(accessibleColor($donationBtnBgColor,$threshold:2),white,50%));
         color: accessibleColor($donationBtnTextColor);
 
         &:hover,
         &:focus {
-            background: $donationBtnBgColor;
+            background: $secondaryColor;
             color: $donationBtnTextColor;
 			border-color: transparent;
         }
@@ -224,4 +223,34 @@ $donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
   .hidden {
     display: none;
   }
+}
+
+.action-list__item {
+  border-bottom: 1px dotted gray;
+  .action-list__body {
+    width: 80%;
+    display: inline-block;
+   	margin-left: 1rem;
+  }
+  h3 {
+    a {
+      color: $secondaryDark;
+      font-weight: bold;
+    }
+  }
+  a {
+    color: $secondaryDark;
+  }
+  .button {
+    max-width: 20%;
+    display: inline-block;
+    text-align: right;
+    align: right;
+  }
+  .subaction {
+    margin-left: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
 }
