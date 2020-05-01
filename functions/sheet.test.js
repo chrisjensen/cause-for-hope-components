@@ -25,47 +25,70 @@ describe('Google Sheets Cloud Function', () => {
 		cache.clear();
 	});
 
-	describe('First request', () => {
-		before(async function beforeFirst() {
-			this.timeout(5000);
-			({ req, res } = prepare());
+	describe('GET', () => {
+		describe('First request', () => {
+			before(async function beforeFirst() {
+				this.timeout(5000);
+				({ req, res } = prepare());
 
-			try {
-				result = await webhook(req, res);
-				return result;
-			} catch (e) {
-				console.error(e);
-				throw e;
-			}
+				try {
+					result = await webhook(req, res);
+					return result;
+				} catch (e) {
+					console.error(e);
+					throw e;
+				}
+			});
+			itSucceeds();
+			itReturnsRows();
+			itReturnsCorrectRows();
 		});
-		itSucceeds();
-		itReturnsRows();
-		itReturnsCorrectRows();
+
+		describe('Second request', () => {
+			before(async function beforeFirst() {
+				({ req, res } = prepare());
+
+				try {
+					result = await webhook(req, res);
+					return result;
+				} catch (e) {
+					console.error(e);
+					throw e;
+				}
+			});
+			itSucceeds();
+			itReturnsRows();
+			itReturnsCorrectRows();
+			it('Spreadsheet calls were not made');
+		});
+
+		describe('Cache bust', () => {
+			before(async function cacheBustBefore() {
+				this.timeout(5000);
+
+				({ req, res } = prepare({ query: { clearCache: 1 } }));
+
+				try {
+					result = await webhook(req, res);
+					return result;
+				} catch (e) {
+					console.error(e);
+					throw e;
+				}
+			});
+			itSucceeds();
+			itReturnsRows();
+			itReturnsCorrectRows();
+		});
 	});
-
-	describe('Second request', () => {
-		before(async function beforeFirst() {
-			({ req, res } = prepare());
-
-			try {
-				result = await webhook(req, res);
-				return result;
-			} catch (e) {
-				console.error(e);
-				throw e;
-			}
-		});
-		itSucceeds();
-		itReturnsRows();
-		itReturnsCorrectRows();
-		it('Spreadsheet calls were not made');
-	});
-
-	describe('Cache bust', () => {
-		before(async function cacheBustBefore() {
+	describe('POST', () => {
+		before(async function beforePost() {
 			this.timeout(5000);
 
-			({ req, res } = prepare({ query: { clearCache: 1 } }));
+			({ req, res } = prepare({
+				method: 'post',
+				body: { data: { url: 'https://actions.sumofus.org/a/covid-cure-held-hostage?akid=72010.782208.WPDCXI&amount=1&currency=USD&rd=1&source=fwd&t=16' } }
+			}));
 
 			try {
 				result = await webhook(req, res);
@@ -76,8 +99,6 @@ describe('Google Sheets Cloud Function', () => {
 			}
 		});
 		itSucceeds();
-		itReturnsRows();
-		itReturnsCorrectRows();
 	});
 
 	/**
@@ -87,6 +108,7 @@ describe('Google Sheets Cloud Function', () => {
 	function itSucceeds() {
 		it('has good result', () => {
 			expect(result).to.eq(true);
+			expect(res.statusCode).to.eq(200);
 		});
 	}
 	function itReturnsRows() {

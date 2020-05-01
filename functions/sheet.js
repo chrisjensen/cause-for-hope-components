@@ -11,7 +11,7 @@ dayjs.extend(customParseFormat);
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
 // Only allowed CORS from our domain
-const allowedOrigins = ['cause-for-hope.raisely.com']
+const allowedOrigins = ['https://cause-for-hope.raisely.com', 'https://admin.raisely.com'];
 
 let getRowsPromise = null;
 
@@ -34,8 +34,10 @@ exports.integration = async function integration(req, res) {
 	res.set('Access-Control-Allow-Credentials', true);
 	res.set('Access-Control-Max-Age', '86400');
 
+	const method = req.method.toLowerCase();
+
 	// If it's an options request, end here
-	if (req.method.toLowerCase() === 'options') {
+	if (method === 'options') {
 		res.status(204).send();
 		return true;
 	}
@@ -43,6 +45,41 @@ exports.integration = async function integration(req, res) {
 	// Throw 403 if not authenticated
 	if (!authenticate(req, res)) return false;
 
+	if (method === 'post') {
+		return doPost(req, res);
+	} else {
+		return doGet(req, res);
+	}
+	return true;
+};
+
+async function doPost(req, res) {
+	const link = req.body.data.url;
+	if (!link) {
+		res.status(400).send({ success: false, error: 'No link supplied' });
+		return false;
+	}
+
+	const sheet = await getSheet();
+
+	const rows = await sheet.getRows();
+	const matchingRow = rows.find(r => r.Link === link);
+
+	if (!matchingRow) {
+		res.status(404).send({ success: false, error: 'Could not find row with link', link });
+		return false;
+	}
+
+	matchingRow.Clicks = parseInt(matchingRow.Clicks || 0) + 1;
+	await matchingRow.save();
+
+	const response = { success: true };
+
+	res.status(200).send(response);
+	return true;
+}
+
+async function doGet(req, res) {
 	// If we need to clear the cache
 	if (req.query.clearCache) {
 		cache.clear();
@@ -60,7 +97,7 @@ exports.integration = async function integration(req, res) {
 
 	res.status(200).send(response);
 	return true;
-};
+}
 
 /**
  * Verify that the webhook came from raisely by checking the shared secret
@@ -80,7 +117,7 @@ function authenticate(req, res) {
 }
 
 function formatRows(rows) {
-	const realKeys = Object.keys(rows[0]).filter(r => !r.startsWith('_'));
+	const realKeys = Object.keys(rows[0]).filter(r => !r.startsWith('_') || r === 'Clicks');
 	const filteredRows = rows
 		.filter(row => row['Share on'])
 		.filter(row => {
@@ -137,23 +174,34 @@ async function getCachedRows() {
 	return rows;
 }
 
+async function getSheet() {
+		// spreadsheet key is the long id in the sheets URL
+		const doc = new GoogleSpreadsheet(process.env.SHEET_KEY);
+
+		let credentials;
+		if (process.env.GOOGLE_CREDENTIALS_JSON) {
+			const jsonCreds = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+			credentials = _.pick(jsonCreds, ['client_email', 'private_key']);
+		} else {
+			credentials = {
+				// use service account creds
+				client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+				private_key: process.env.GOOGLE_PRIVATE_KEY,
+			};
+		}
+		await doc.useServiceAccountAuth(credentials);
+
+		// loads document properties and worksheets
+		await doc.loadInfo();
+		const sheet = doc.sheetsByIndex.find(sheet => sheet.title === 'Actions');
+		return sheet;
+}
 
 /**
  * Get rows from Google Sheets
  */
 async function getRows() {
-	// spreadsheet key is the long id in the sheets URL
-	const doc = new GoogleSpreadsheet(process.env.SHEET_KEY);
-
-	// use service account creds
-	await doc.useServiceAccountAuth({
-		client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-		private_key: process.env.GOOGLE_PRIVATE_KEY,
-	});
-
-	// loads document properties and worksheets
-	await doc.loadInfo();
-	const sheet = doc.sheetsByIndex.find(sheet => sheet.title === 'Actions');
+	const sheet = await getSheet();
 
 	const rows = await sheet.getRows();
 
