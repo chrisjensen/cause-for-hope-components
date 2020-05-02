@@ -38,35 +38,41 @@
 	function ActionButton({ action, clickAction }) {
 		const { isDone } = action;
 
+		const theme = action.Spotlight === 'Share' ? 'primary' : 'secondary';
+
 		if (isDone) {
 			return (
-				<Button disabled={true}>👍 You Did This!</Button>
+				<Button disabled={true} theme={theme}>👍 You Did This!</Button>
 			);
 		}
 
 		return (
-			<Button className="took-action" onClick={(e) => clickAction(e, action)} theme="secondary">
-				⚡️ {action['Link Title'] || 'Act Now'}
+			<Button className="took-action" onClick={(e) => clickAction(e, action)} theme={theme}>
+				{action['Link Title'] || 'Act Now'}
 			</Button>
 		);
 	}
 
 	function ActionItem(props) {
 		const { action, clickAction, spotlight } = props;
+
+		const onClick = (e, action) => clickAction(e, action);
 		action.emoji = iconMap[(action.Type || '').toLowerCase()];
 		return (
 			<div className="action-list__item">
 				<div className="action-list__body">
-					<h3 onClick={(e) => clickAction(e, action)}>
-						{action.emoji} <span className="link">{action.Heading}</span>
+					<h3 onClick={onClick}>
+						{action.emoji} {action.Link ? (
+							<a href={action.Link} onClick={onClick}>{action.Heading}</a>
+						) : action.Heading}
 					</h3>
 					{spotlight === 'act' && (
 						<p><strong>If you only take one action today, make it this one</strong></p>
 					)}
 					{spotlight === 'share' && (
 						<div>
-							<p><strong>Social change happens when people share a vision for a better world.</strong></p>
-							<p><strong>Share this to bring us one circle of friends closer to positive change</strong></p>
+							<p><strong>Social change happens when people share a vision for a better world.
+								Share this to bring us one circle of friends closer to positive change</strong></p>
 						</div>
 					)}
 					{action.subactions && action.subactions.map(subaction => (
@@ -74,7 +80,7 @@
 					))}
 					{action.Description && <p>{action.Description}</p>}
 				</div>
-				<ActionButton {...props} />
+				<ActionButton {...props} clickAction={onClick} />
 			</div>
 		);
 	}
@@ -134,7 +140,8 @@
 		 * Send an alert to streamlabs when someone takes action
 		 */
 		clickAction = async (e, action) => {
-			e.stopPropogation();
+			console.log('Clicked', e,action)
+			e.preventDefault();
 			window.open(action.Link);
 			// Try to record unique clicks only
 			if (action.isDone) return;
