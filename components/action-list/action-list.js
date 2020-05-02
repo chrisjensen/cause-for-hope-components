@@ -64,7 +64,10 @@
 						<p><strong>If you only take one action today, make it this one</strong></p>
 					)}
 					{spotlight === 'share' && (
-						<p><strong>Social change happens when people share a vision for a better world. Share this to bring us one circle of friends closer to positive change</strong></p>
+						<div>
+							<p><strong>Social change happens when people share a vision for a better world.</strong></p>
+							<p><strong>Share this to bring us one circle of friends closer to positive change</strong></p>
+						</div>
 					)}
 					{action.subactions && action.subactions.map(subaction => (
 						<Link className="subaction" key={subaction.url} href={subaction.url}>{subaction.label}</Link>
@@ -170,12 +173,12 @@
 			return (
 				<div className="action-list__wrapper">
 					{actionSpotlight && (
-						<div className="action-list__spotlight">
+						<div className="action-list__spotlight spotlight-act">
 							<ActionItem action={actionSpotlight} spotlight="act" clickAction={this.clickAction} />
 						</div>
 					)}
 					{shareSpotlight && (
-						<div className="action-list__spotlight">
+						<div className="action-list__spotlight spotlight-share">
 							<ActionItem action={shareSpotlight} spotlight="share" clickAction={this.clickAction} />
 						</div>
 					)}
