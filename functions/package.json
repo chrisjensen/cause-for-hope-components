@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.19.2",
     "dayjs": "^1.8.26",
     "google-spreadsheet": "^3.0.11",
     "lodash": "^4.17.15",
