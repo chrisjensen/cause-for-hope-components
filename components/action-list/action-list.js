@@ -56,7 +56,7 @@
 	function ActionItem(props) {
 		const { action, clickAction, spotlight } = props;
 
-		const onClick = (e, action) => clickAction(e, action);
+		const onClick = (e) => clickAction(e, action);
 		action.emoji = iconMap[(action.Type || '').toLowerCase()];
 		return (
 			<div className="action-list__item">
@@ -80,7 +80,9 @@
 					))}
 					{action.Description && <p>{action.Description}</p>}
 				</div>
-				<ActionButton {...props} clickAction={onClick} />
+				<div className="action-list__button-wrapper">
+					<ActionButton {...props} clickAction={onClick} />
+				</div>
 			</div>
 		);
 	}
