@@ -4,7 +4,9 @@
 $donationFormColor: $btnPrimaryBgColor;
 $donationBtnBgColor: $primaryColor;
 $donationBtnTextColor: $btnPrimaryTextColor;
-$donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
+$donationFormHeaderColor: $secondaryColor;
+
+$tertiaryColor: #ff8600;
 
 /* PAGE NAVIGATION */
 .page-navigation {
@@ -118,29 +120,32 @@ $donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
 .donation-form {
 	background: white;
 	box-shadow: none;
-	border: 1px solid $donationFormHeaderColor;
+	border: 1px solid $tertiaryColor;
+  border-radius: 1rem;
 
     &__header {
         position: relative;
-		background: $donationFormHeaderColor;
+		background: $tertiaryColor;
+      border-top-right-radius: 1rem;
+      border-top-left-radius: 1rem;
 
 		> * {
 			position: relative;
 		}
 
         h4 {
-            color: accessibleColor($donationFormColor);
+            color: $secondaryDarkest;
         }
     }
 
     &__stage {
-        border-color: $primaryDarkest;
-		color: rgba(accessibleColor($donationFormColor),.75);
+        border-color: $tertiaryColor;
+		color: $secondaryDarkest;
 
         &--active {
-            background: accessibleColor($donationFormColor);
-			border-color: accessibleColor($donationFormColor);
-            color: accessibleColor(white, accessibleColor($donationFormColor));
+            background: $primaryColor;
+			border-color: $tertiaryColor;
+            color: $secondaryDarkest;
         }
     }
 
@@ -162,6 +167,8 @@ $donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
     &__nav .button {
         margin: 0;
         border-radius: 0;
+        border-bottom-right-radius: 1rem;
+        border-bottom-left-radius: 1rem;
 
         &.donation-form__back {
             border-bottom-right-radius: 0;
@@ -226,12 +233,16 @@ $donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
 }
 
 .action-list__item {
-  border-bottom: 1px dotted gray;
+  @include respond-to('min-mobile') {
+    border-bottom: 1px dotted gray;
+  }
   .action-list__body {
-    width: 70%;
-    display: inline-block;
+   	@include respond-to('min-mobile') {
+      width: 70%;
+      display: inline-block;
+      margin-right: 5%;
+    }
    	margin-left: 1rem;
-    margin-right: 5%;
     vertical-align: middle;
     padding-bottom: 0.5rem;
     padding-top: 0.5rem;
@@ -245,10 +256,25 @@ $donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
   a {
     color: $secondaryDark;
   }
-  .button {
-    width: 20%;
-    display: inline-block;
-    vertical-align: middle;
+	@include respond-to('min-mobile') {
+    .action-list__button-wrapper {
+      width: 20%;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .button {
+      width: 100%;
+      display: inline-block;
+      vertical-align: middle;
+    }
+  }
+  @include respond-to('mobile') {
+    .action-list__button-wrapper {
+      text-align: center;
+      .button {
+        display: inline-block;
+      }
+    }
   }
   .subaction {
     margin-left: 1rem;
@@ -266,6 +292,19 @@ $donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
   }
   border-radius: 0.5rem;
   margin-bottom: 1rem;
+  h3 {
+    color: accessibleColor($secondaryDark)
+  }
+}
+
+.spotlight-donate {
+  background: $tertiaryColor;
+}
+.spotlight-act {
+  background: $primaryColor;
+}
+.spotlight-share {
+  background: $secondaryLighter;
 }
 
 .subscribe--box {
@@ -274,3 +313,30 @@ $donationFormHeaderColor: mix(accessibleColor($donationFormColor),white,15%);
   border-radius: 0.5rem;
 }
 
+.form-field, .form-field__label-text, .form-field input {
+  color: $secondaryDarkest;
+}
+
+.donation-action {
+  margin-bottom: 1rem;
+}
+
+.row--sticky, .col--sticky, .block--sticky {
+    position: sticky;
+    top: 1em;
+    align-self: flex-start;
+    z-index: 1;
+}
+
+.custom-form__header {
+  display: none;
+}
+
+.custom-form__navigation {
+  margin-top: 1rem;
+}
+
+.field-wrapper {
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
