@@ -36,7 +36,9 @@
 							<p><strong>The organisations the advocate for people and planet depend on the generosity of donors to fund their advocacy.</strong></p>
 							<p>{profile.description}</p>
 						</div>
-						<Button onClick={this.donate} theme="secondary">Donate</Button>
+						<div className="action-list__button-wrapper">
+							<Button onClick={this.donate} theme="secondary">Donate</Button>
+						</div>
 					</div>
 				</div>
 			);
