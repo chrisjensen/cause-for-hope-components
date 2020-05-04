@@ -4,7 +4,7 @@
   "description": "",
   "main": "sheet.js",
   "scripts": {
-    "test": "mocha -w sheet.test.js"
+    "test": "mocha -w *.test.js"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +19,7 @@
     "chai-subset": "^1.6.0",
     "dotenv": "^8.2.0",
     "mocha": "^7.1.2",
+    "nock": "^12.0.3",
     "sinon": "^9.0.2"
   }
 }

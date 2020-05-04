@@ -2,3 +2,4 @@ node_modules/
 .raisely.json
 functions/test-service-account.json
 functions/node_modules
+functions/.env
