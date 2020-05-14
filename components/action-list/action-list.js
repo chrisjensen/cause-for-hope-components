@@ -191,6 +191,7 @@
 							<ActionItem action={shareSpotlight} spotlight="share" clickAction={this.clickAction} />
 						</div>
 					)}
+					<p>Since {`you're`} here, why not go the extra mile and support these organisations too ...</p>
 					{dates.map(actionDate => (
 						<div key={actionDate} className="action-list__date-group">
 							<h2>{actionDate}</h2>
