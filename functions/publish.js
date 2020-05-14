@@ -114,6 +114,7 @@ async function schedulePosts(req, res, socialSheet, winRows, actionRows) {
 		const row = rowsToPost[i];
 		// Just move on if we couldn't find the description for the post
 		if (!row.Description) continue;
+		console.log(`Publishing: ${row.Heading}`);
 		// Only post 10 rows because that's buffer's limit, the rest
 		// will silently fail
 		await axios.post(AUTOMATE_WEBHOOK, {
