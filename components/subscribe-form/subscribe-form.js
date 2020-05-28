@@ -5,14 +5,6 @@
 
 	const CustomForm = RaiselyComponents.import('custom-form');
 
-	const fields = ['user.preferredName', 'user.email'];
-
-	const steps = [{
-		title: 'Subscribe',
-		description: 'No spam. Simple emails to keep you informed of the latest actions you can take.',
-		fields,
-	}];
-
 	function dec2hex (dec) {
 		return ('0' + dec.toString(16)).substr(-2)
 	}
@@ -32,24 +24,40 @@
 
 			// Signup creates users for login, but we don't need the user
 			// to login. So let's keep the form lean by generating a
-			// secure password for them
+			// random password for their account so the submission succeeds
 			user.password = randomPassword();
 			await getData(api.users.signup({ data: user, campaignUuid }));
 		}
 
+		renderForm(props) {
+			return <CustomForm {...{ ...props }} />;
+		}
+
 		render() {
-			const values = this.props.getValues();
+			const fields = ['user.preferredName', 'user.email'];
+
+			const formStep = {
+				fields,
+				description: this.props.description || 'No spam. Simple emails to keep you informed of the latest actions you can take.',
+			};
+
 			const props = {
 				...this.props,
-				steps,
+				steps: [formStep],
 				controller: this,
 				completeText: '👍 Thanks!',
 				actionText: 'Subscribe',
 			};
 
+			if (this.props.embed) {
+				return this.renderForm(props);
+			} else {
+				formStep.title = 'Subscribe';
+			}
+
 			return (
 				<div className="subscribe--form subscribe--box">
-					<CustomForm {...{ ...props }} />
+					{this.renderForm(props)}
 				</div>
 			);
 		}
