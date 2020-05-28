@@ -3,6 +3,8 @@ const dayjs = require('dayjs');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 const customParseFormat = require('dayjs/plugin/customParseFormat')
 const axios = require('axios');
+const pMap = require('p-map');
+const webpush = require("web-push");
 
 dayjs.extend(customParseFormat);
 
@@ -47,7 +49,10 @@ exports.integration = async function integration(req, res) {
 
 	try {
 		const { socialSheet, winRows, actionRows } = await insertNewLinks();
-		await schedulePosts(req, res, socialSheet, winRows, actionRows);
+		const publishedCount = await schedulePosts(req, res, socialSheet, winRows, actionRows);
+		if (publishedCount) {
+			await sendPushNotifications(publishedCount)
+		}
 	} catch (e) {
 		console.error(e);
 		res.status(500).send({ success: false, message: e.message || 'Unknown error' });
@@ -55,6 +60,50 @@ exports.integration = async function integration(req, res) {
 	}
 	return true;
 };
+
+async function sendPushNotifications(publishedCount, title) {
+	const RAISELY_API = 'https://api.raisely.com/v3';
+	const MAX_CONCURRENCY = 50;
+
+	const message = {
+		title,
+		actionCount: publishedCount,
+		url: '/',
+	};
+	// fetch users from raisely
+
+
+	// Raisely API doesn't have a is present modifier, but we can hack the Greater Than search to find
+	// anything that has a value that's alphabetically "greater than" http which will be any record
+	// with a url starting with http
+	let nextUrl = `${RAISELY_API}/users?private=1&private.subscriptionGT=http`;
+	do {
+		// eslint-disable-next-line no-await-in-loop
+		const { data } = await axios.get(nextUrl, {
+			headers: {
+				Authorization: `Bearer ${process.env.RAISELY_API_KEY}`,
+			},
+		});
+
+		({ nextUrl } = data.pagination);
+
+		// Push to the user
+		await pMap(data.data, (user) => pushToUser(user, message), { concurrency: MAX_CONCURRENCY });
+	} while (nextUrl);
+
+}
+
+async function pushToUser(user, message) {
+	const pushSubscription = user.private.subscription;
+	return webpush
+		.sendNotification(
+			pushSubscription,
+			JSON.stringify(message),
+		)
+		.catch(err => {
+			console.log(err);
+		});
+}
 
 async function insertNewLinks() {
 	const document = await getDocument();
@@ -127,6 +176,8 @@ async function schedulePosts(req, res, socialSheet, winRows, actionRows) {
 	}
 
 	res.status(200).send({ success: true, message: `${published} posts buffered` });
+
+	return published;
 }
 
 /**
