@@ -10,6 +10,7 @@
 	const { Link, Spinner } = RaiselyComponents;
 	const { Button } = RaiselyComponents.Atoms;
 	const { dayjs, get } = RaiselyComponents.Common;
+	const { Communicator } = RaiselyComponents.Modules;
 
 	const actionListUrl = 'https://asia-northeast1-cause-for-hope.cloudfunctions.net/action-list';
 	// This is going on a public facing website so no need to keep it
@@ -87,8 +88,8 @@
 		);
 	}
 
-	return class ActionList extends React.Component {
-		state = { actions: {}, actionList: {} };
+	class ActionList extends React.Component {
+		state = { actions: {}, actionList: {}, actionCount: 0 };
 
 		componentDidMount() {
 			this.load();
@@ -145,10 +146,16 @@
 			console.log('Clicked', e,action)
 			e.preventDefault();
 			window.open(action.Link);
+			const { sendActions } = this.props;
+			let { actionCount } = this.state;
+
+			actionCount += 1;
 			// Try to record unique clicks only
 			if (action.isDone) return;
 			action.isDone = true;
-			this.setState({ lastUpdate: new Date() });
+			this.setState({ actionCount, lastUpdate: new Date() });
+			// Sent the number of actions taken to be used by action-guide
+			sendActions({ actionCount });
 
 			const url = actionListUrl;
 
@@ -204,4 +211,14 @@
 			);
 		}
 	};
+
+	return function WrappedActionList({ ...props }) {
+		return (
+			<Communicator channelId="actions-taken">
+				{({ send }) => (
+					<ActionList {...props} sendActions={send} />
+				)}
+			</Communicator>
+		);
+	}
 };
