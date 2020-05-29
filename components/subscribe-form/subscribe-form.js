@@ -1,7 +1,7 @@
 (RaiselyComponents, React) => {
 	const { api } = RaiselyComponents;
-	const { getData, getQuery, save } = api;
-	const { dayjs, get, set } = RaiselyComponents.Common;
+	const { getData, } = api;
+	const { get } = RaiselyComponents.Common;
 
 	const CustomForm = RaiselyComponents.import('custom-form');
 
@@ -16,9 +16,9 @@
 		return Array.from(arr, dec2hex).join('')
 	}
 
-
 	return class SubscribeForm extends React.Component {
 		save = async (values, formToData) => {
+			const { onSubscribe } = this.props;
 			const { user } = formToData(values);
 			const campaignUuid = get(this.props, 'global.campaign.uuid');
 
@@ -27,9 +27,15 @@
 			// random password for their account so the submission succeeds
 			user.password = randomPassword();
 			await getData(api.users.signup({ data: user, campaignUuid }));
+			if (onSubscribe) onSubscribe();
 		}
 
 		renderForm(props) {
+			const user = get(this.props, 'global.user');
+			if (user) {
+				return 'Thanks for subscribing!';
+			}
+
 			return <CustomForm {...{ ...props }} />;
 		}
 
