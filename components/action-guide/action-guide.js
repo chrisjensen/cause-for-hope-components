@@ -4,20 +4,22 @@
 	const { get, sumBy } = RaiselyComponents.Common;
 
 	const SubscribeForm = RaiselyComponents.import('subscribe-form');
+	const NotifySubscribe = RaiselyComponents.import('notify-subscribe');
 
 	// Initial steps for someone to complete
 	const initialSteps = [{
 		name: 'first-actions',
 		render: () => <p>Next Step: Complete 2 actions</p>,
 		getProgress: ({ actionCount }) => actionCount,
+		// Step requires getProgress to be === 2 to be complete
 		steps: 2,
-	}, {
-		name: 'subscribe',
-		render: ({ global }) => <SubscribeForm global={global} embed description="Next Step: Keep updated on the latest actions" />,
-		steps: 1,
 	}, {
 		name: 'share',
 		render: ShareStep,
+		steps: 1,
+	}, {
+		name: 'allow-push',
+		render: ({ global, onStepDone }) => <NotifySubscribe global={global} onSubscribe={onStepDone} />,
 		steps: 1,
 	}, {
 		// Bonus step to become an All Star
@@ -25,6 +27,11 @@
 		render: () => <p>Complete 2 more actions to become an All Star</p>,
 		getProgress: ({ actionCount }) => Math.max(0, actionCount - 2),
 		steps: 2,
+	}, {
+		name: 'subscribe',
+		render: ({ global }) => <SubscribeForm global={global} embed description="Next Step: Keep updated on the latest actions" onSubscribe={onStepDone} />,
+		getProgress: ({ global }) => global.user ? 1 : 0,
+		steps: 1,
 	}];
 
 	const ShareStep = ({ global }) => (
@@ -40,63 +47,16 @@
 
 	class ActionGuide extends React.Component {
 		state = {
-			step: 0,
-			completeSteps: 0,
+			stepIndex: 0,
 			mode: 'champion',
+			// Hash of individual progress for each step (as some can be partially complete)
 			stepProgress: {},
-			totalSteps: 4,
+			goal: 4,
+			// score
 		}
 
 		componentDidMount() {
 			this.refreshSteps();
-		}
-
-		evaluateSteps() {
-			const { stepProgress } = this.state;
-			const actionCount = this.getActionCount();
-
-			initialSteps.forEach(step => {
-				if (step.getProgress && ((stepProgress[step.name] || 0) < step.steps)) {
-					const progress = step.getProgress({ actionCount });
-					// Ensure progress never exceeds maximum value
-					stepProgress[step.name] = Math.min(step.steps, progress);
-				}
-			});
-
-			const completeSteps = sumBy(initialSteps, step => stepProgress[step.name] || 0);
-
-			this.setState({ stepProgress });
-			return completeSteps;
-		}
-
-		refreshSteps() {
-			let { totalSteps, mode, stepProgress } = this.state;
-			let completeSteps = 0;
-			let step;
-
-			completeSteps = this.evaluateSteps();
-
-			if (completeSteps >= totalSteps) {
-				if (mode === 'champion') {
-					mode = 'bonus';
-					totalSteps = 6;
-				} else {
-					mode = 'finished';
-					step = null;
-				}
-			}
-
-			if (mode !== 'finished') {
-				// Find the first incomplete step
-				step = initialSteps.find(s => stepProgress[s.name] || 0 < s.steps)
-			}
-
-			this.setState({
-				completeSteps,
-				totalSteps,
-				mode,
-				step,
-			});
 		}
 
 		componentDidUpdate() {
@@ -107,14 +67,79 @@
 			}
 		}
 
+		evaluateSteps() {
+			const { global } = this.state;
+			const { stepProgress } = this.state;
+			const actionCount = this.getActionCount();
+
+			initialSteps.forEach(step => {
+				// If the step has a function to evaluate progress and the step
+				// is not complete, evaluate it
+				if (step.getProgress && ((stepProgress[step.name] || 0) < step.steps)) {
+					const progress = step.getProgress({ actionCount, global });
+					// Ensure progress never exceeds maximum value
+					stepProgress[step.name] = Math.min(step.steps, progress);
+				}
+			});
+
+			// Sum the value of all steps
+			const score = sumBy(initialSteps, step => stepProgress[step.name] || 0);
+
+			this.setState({ stepProgress });
+			return { score, stepProgress };
+		}
+
+		refreshSteps = () => {
+			let { goal, mode, stepIndex } = this.state;
+			const { score: oldScore } = this.state;
+			const { score, stepProgress } = this.evaluateSteps();
+			let step;
+
+			if (score >= goal) {
+				// If they've done the regular steps, extend
+				// them into bonus steps
+				if (mode === 'champion') {
+					mode = 'bonus';
+					goal = 6;
+				} else {
+					mode = 'finished';
+					step = null;
+				}
+			}
+
+			// If a step has complete and we were on that step
+			// advance to the next unfinished step
+			if (score !== oldScore) {
+				if (step.steps >= (stepProgress[step.name] || 0)) {
+					stepIndex = initialSteps.findIndex(s => stepProgress[s.name] || 0 < s.steps);
+					step = initialSteps[stepIndex];
+				}
+			}
+
+			this.setState({
+				goal,
+				score,
+				mode,
+				step,
+				stepIndex,
+				stepProgress,
+			});
+		}
+
+		onStepDone(name) {
+			const { stepProgress } = this.state;
+			stepProgress[name] = (stepProgress[name] || 0) + 1;
+			this.setState({ stepProgress }, this.refreshSteps);
+		}
+
 		stepForward = () => {
-			const { step, stepProgress, actionCount } = this.state;
-			if (step.getProgress) this.setState({ actionCount: (actionCount || 0) + 1 })
+			const { step, stepProgress } = this.state;
+			let { actionCount } = this.state;
+			if (step.getProgress) actionCount += 1;
 			else stepProgress[step.name] = (stepProgress[step.name] || 0) + 1;
 
 			console.log('Got click', step.name, stepProgress[step.name])
-			this.setState({ stepProgress });
-			this.refreshSteps();
+			this.setState({ actionCount, stepProgress }, this.refreshSteps);
 		}
 
 		getActionCount = () => {
@@ -138,17 +163,17 @@
 					<p className="action-guide__header">{headers[mode]}</p>
 					{step && (
 						<div className="action-guide__step">
-							{step.render({ globals, actionCount })}
+							{step.render({ globals, actionCount, onStepDone: () => this.onStepDone(step.name) })}
 						</div>
 					)}
 					<Button
 						className="action-guide__next-button"
-						onClick={this.steForward}
+						onClick={this.stepForward}
 					>&gt;</Button>
 					<ProgressBar
 						displaySource="custom"
-						total={completeSteps}
-						goal={totalSteps}
+						total={score}
+						goal={goal}
 						showTotal={false}
 						showGoal={false}
 						style="rounded"
