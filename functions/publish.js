@@ -45,7 +45,8 @@ exports.integration = async function integration(req, res) {
 	}
 
 	// Throw 403 if not authenticated
-	if (!authenticate(req, res)) return false;
+	const isAuthentic = await authenticate(req, res);
+	if (!isAuthentic) return false;
 
 	try {
 		const { socialSheet, winRows, actionRows } = await insertNewLinks();
@@ -181,17 +182,25 @@ async function schedulePosts(req, res, socialSheet, winRows, actionRows) {
 }
 
 /**
- * Verify that the webhook came from raisely by checking the shared secret
- * If authentication fails, will set a 200 response
- * (to prevent Raisely from continuing to retry the webhook with a bad secret)
+ * Check if the current user is an admin and disallow publishing if they're not
+ *
  * @param {*} req
  * @param {*} res
  * @returns {boolean} true if the request is authenticated
  */
-function authenticate(req, res) {
+async function authenticate(req, res) {
 	const secret = req.headers.authorization;
 
-	if (secret && secret.toLowerCase() === `bearer ${WEBHOOK_SECRET}`.toLowerCase()) return true;
+	// Load the details of this user to check if they are an admin
+	const url = `${RAISELY_API}/users/me?private=1`;
+
+	const { data: user } = await axios.get(url, {
+		headers: {
+			Authorization: `Bearer ${secret}`,
+		},
+	});
+
+	if (user.isAdmin) return true;
 
 	res.status(403).send({ success: false, error: 'unauthorized' });
 	return false;
