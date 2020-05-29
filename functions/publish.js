@@ -1,16 +1,14 @@
 const _ = require('lodash');
 const dayjs = require('dayjs');
-const { GoogleSpreadsheet } = require('google-spreadsheet');
+const spreadsheet = require('google-spreadsheet');
 const customParseFormat = require('dayjs/plugin/customParseFormat')
 const axios = require('axios');
 const pMap = require('p-map');
-const webpush = require("web-push");
+const webpush = require('web-push');
 
 dayjs.extend(customParseFormat);
 
-// Shared secret. Will prevent basic scrapers (won't stop people
-// from extracting the shared key from the Javascript that calls it)
-const WEBHOOK_SECRET = process.env.ADMIN_WEBHOOK_SECRET;
+const RAISELY_API = 'https://api.raisely.com/v3';
 
 const AUTOMATE_WEBHOOK = process.env.AUTOMATE_WEBHOOK;
 
@@ -49,10 +47,13 @@ exports.integration = async function integration(req, res) {
 	if (!isAuthentic) return false;
 
 	try {
+		// Insert new links into the social spreadsheet
 		const { socialSheet, winRows, actionRows } = await insertNewLinks();
+		// Schedule the posts in buffer
 		const publishedCount = await schedulePosts(req, res, socialSheet, winRows, actionRows);
+
 		if (publishedCount) {
-			await sendPushNotifications(publishedCount)
+			await sendPushNotifications(publishedCount);
 		}
 	} catch (e) {
 		console.error(e);
@@ -63,7 +64,6 @@ exports.integration = async function integration(req, res) {
 };
 
 async function sendPushNotifications(publishedCount, title) {
-	const RAISELY_API = 'https://api.raisely.com/v3';
 	const MAX_CONCURRENCY = 50;
 
 	const message = {
@@ -71,13 +71,11 @@ async function sendPushNotifications(publishedCount, title) {
 		actionCount: publishedCount,
 		url: '/',
 	};
-	// fetch users from raisely
 
-
-	// Raisely API doesn't have a is present modifier, but we can hack the Greater Than search to find
-	// anything that has a value that's alphabetically "greater than" http which will be any record
-	// with a url starting with http
-	let nextUrl = `${RAISELY_API}/users?private=1&private.subscriptionGT=http`;
+	// Raisely API doesn't have an "is present" modifier, but we can use the Greater Than search
+	// modifier to find anything that has a value that's lexiographically "greater than" the '{'
+	// character which will be any record with a json object stored there
+	let nextUrl = `${RAISELY_API}/users?private=1&private.subscriptionGT={`;
 	do {
 		// eslint-disable-next-line no-await-in-loop
 		const { data } = await axios.get(nextUrl, {
@@ -95,10 +93,11 @@ async function sendPushNotifications(publishedCount, title) {
 }
 
 async function pushToUser(user, message) {
+	console.log('Pushing to user', user.uuid);
 	const pushSubscription = user.private.subscription;
 	return webpush
 		.sendNotification(
-			pushSubscription,
+			JSON.parse(pushSubscription),
 			JSON.stringify(message),
 		)
 		.catch(err => {
@@ -221,7 +220,7 @@ function filterRowsByDate(rows) {
 
 async function getDocument() {
 	// spreadsheet key is the long id in the sheets URL
-	const doc = new GoogleSpreadsheet(process.env.SHEET_KEY);
+	const doc = new spreadsheet.GoogleSpreadsheet(process.env.SHEET_KEY);
 
 	let credentials;
 	if (process.env.GOOGLE_CREDENTIALS_JSON) {
